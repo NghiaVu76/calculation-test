@@ -25,7 +25,7 @@
 }
 
 .calculator-display {
-  height: 70px;
+  height: 100px;
   width: 280px;
   background-color: var(--background-color);
   box-shadow: inset -5px -5px 12px var(--white),
@@ -40,6 +40,12 @@
   margin-top: 40px;
   margin-bottom: 30px;
   padding: 20px;
+}
+
+.operator-display {
+  color: red;
+  font-size: 18px;
+  font-weight: 500;
 }
 
 .calculator-keys {
