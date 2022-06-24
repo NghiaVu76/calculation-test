@@ -1,4 +1,3 @@
-const container = document.querySelector(".calculator");
 const display = document.querySelector(".operator-display");
 const result = document.querySelector(".result");
 const keys = document.querySelector(".calculator-keys");
@@ -135,10 +134,8 @@ var data = {
 
 // add button
 const createButtons = () => {
-  var added_keys = 0;
   calculator_buttons.forEach((button, index) => {
     keys.innerHTML += `<button id="${button.name}" class="${button.class}">${button.label}</button>`;
-    added_keys++;
   });
 };
 createButtons();
@@ -154,49 +151,77 @@ keys.addEventListener("click", (e) => {
   });
 });
 
+var isNewCalculation = false; // check new calculation - kiểm tra xem có phải phép tính mới không
+
 var calculator = (button) => {
   if (button.type == "operator") {
     data.screenMemory.push(button.label);
     data.memory.push(button.formula);
-  } else if (button.type == "number") {
+    isNewCalculation = false;
+  } else if (button.type == "number" && isNewCalculation == false) {
     data.screenMemory.push(button.label);
     data.memory.push(button.formula);
+  } else if (button.type == "number" && isNewCalculation == true) {
+    data.screenMemory = []; //if a new calculation then clear screen
+    data.memory = []; //if a new calculation then clear screen
+    data.screenMemory.push(button.label);
+    data.memory.push(button.formula);
+    isNewCalculation = false;
   } else if (button.type == "action") {
     if (button.name == "clear") {
       data.screenMemory = [];
       data.memory = [];
       updateResult(0);
+      isNewCalculation = false;
     } else if (button.name == "delete") {
       data.screenMemory.pop();
       data.memory.pop();
     }
   } else if (button.type == "calculate") {
-    let memoryArray = data.memory.join("");
-    console.log(memoryArray);
+    let memoryString = data.memory.join("");
+
     data.screenMemory = [];
     data.memory = [];
 
     let finalResult;
+    let operatorCount = 0; // number of operators
+
+    for (let i = 0; i <= memoryString.length; i++) {
+      if (
+        memoryString[i] == "+" ||
+        memoryString[i] == "-" ||
+        memoryString[i] == "*" ||
+        memoryString[i] == "/"
+      ) {
+        operatorCount++;
+      }
+    }
 
     try {
-      for (let i = 0; i <= memoryArray.length; i++) {
-        var leftNum = Number(memoryArray.slice(0, i));
-        var rightNum = Number(memoryArray.slice(i + 1, memoryArray.length + 1));
-        if (memoryArray[i] === "+") {
-          finalResult = leftNum + rightNum;
-        } else if (memoryArray[i] === "-") {
-          finalResult = leftNum - rightNum;
-        } else if (memoryArray[i] === "*") {
-          finalResult = leftNum * rightNum;
-        } else if (memoryArray[i] === "/") {
-          finalResult = leftNum / rightNum;
-        } else if (memoryArray[i] === "%") {
-          finalResult = finalResult * 100;
+      if (operatorCount == 1) {
+        for (let i = 0; i <= memoryString.length; i++) {
+          var leftNum = Number(memoryString.slice(0, i));
+          var rightNum = Number(
+            memoryString.slice(i + 1, memoryString.length + 1)
+          );
+          if (memoryString[i] === "+") {
+            finalResult = leftNum + rightNum;
+          } else if (memoryString[i] === "-") {
+            finalResult = leftNum - rightNum;
+          } else if (memoryString[i] === "*") {
+            finalResult = leftNum * rightNum;
+          } else if (memoryString[i] === "/") {
+            finalResult = leftNum / rightNum;
+          } else if (memoryString[i] === "%") {
+            finalResult = finalResult / 100;
+          }
         }
+      } else if (operatorCount > 1) {
+        finalResult = eval(memoryString);
       }
     } catch (error) {
       if (error instanceof Error) {
-        finalResult = "Syntax Error!";
+        finalResult = "Error!";
         updateResult(finalResult);
         return;
       }
@@ -208,6 +233,9 @@ var calculator = (button) => {
     data.memory.push(finalResult);
 
     updateResult(finalResult); // update output
+
+    isNewCalculation = true; //set a new calculation
+
     return;
   }
 
@@ -222,18 +250,15 @@ var calculator = (button) => {
   updateOutputScreen(data.screenMemory.join(""));
 };
 
-// func update screen
 const updateOutputScreen = (screenString) => {
   console.log(screenString);
   display.innerHTML = screenString;
 };
 
-// func pdate result
 const updateResult = (finalResult) => {
   result.innerHTML = finalResult;
 };
 
-// func count digits
 const digitCounter = (number) => {
   return number.toString().length;
 };
@@ -244,8 +269,9 @@ const isFloat = (number) => {
 };
 
 const maxOutputLength = 10; // max output number length
-const outputPrecision = 10; // calculate precision upto 5 digits
+const outputPrecision = 10; // calculate precision upto 10 digits
 
+//format result func
 const formatResult = (result) => {
   if (digitCounter(result) > maxOutputLength) {
     if (isFloat(result)) {
